@@ -1,0 +1,9 @@
+version: 1
+jobs:
+  build:
+    working_directory: /go/src/app.goride/
+    docker:
+      - image: circleci/golang:1.8
+      - image: circleci/postgres:9.4.12-alpine
+        environment:
+          

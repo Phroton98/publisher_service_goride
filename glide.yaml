@@ -1,0 +1,8 @@
+package: app.goride/publisher
+import:
+- package: github.com/gin-gonic/gin
+  version: master
+- package: github.com/jinzhu/gorm
+  version: master
+- package: github.com/go-redis/redis
+  version: v6.13.2
