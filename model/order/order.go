@@ -30,6 +30,7 @@ type CancelPayload struct {
 type DeclinePayload struct {
 	UserId int `json:"user_id" binding:"required"`
 	UserToken string `json:"user_token" binding:"required"`
+	TransactionId int `json:"transaction_id"`
 }
 
 type UpdatePayload struct {
@@ -38,6 +39,7 @@ type UpdatePayload struct {
 	UserToken string `json:"user_token" binding:"required"`
 	DriverId int `json:"driver_id" binding:"required"`
 	DriverToken string `json:"driver_token" binding:"required"`
+	TransactionId *int `json:"transaction_id,omitempty"`
 }
 
 func CreateOrder(u OrderInformation, totalDriver int) (int, error) {
@@ -123,20 +125,20 @@ func CancelOrder(id string, payload CancelPayload) (int, error) {
 	}
 }
 
-func AcceptOrder(id string, payload UpdatePayload) (int, error) {
+func AcceptOrder(id string, payload UpdatePayload) (int, *Order, error) {
 	if db, err := ConnectDatabase(); err != nil {
-		return http.StatusInternalServerError, err
+		return http.StatusInternalServerError, nil, err
 	} else {
 		defer db.Close()
 		var order Order
 		if err = FindOrderById(db, id, &order); err != nil {
-			return http.StatusNotFound, err
+			return http.StatusNotFound, nil, err
 		} else if order.Status != config.QUEUEING {
-			return http.StatusNotAcceptable, errors.New("Order cannot be accepted!")
+			return http.StatusNotAcceptable, nil, errors.New("Order cannot be accepted!")
 		}
 		order.Status = config.ACCEPTED
 		db.Save(&order)
-		return http.StatusOK, nil
+		return http.StatusOK, &order, nil
 	}
 }
 
@@ -148,9 +150,11 @@ func FinishOrder(id string, payload UpdatePayload) (int, error) {
 		var order Order
 		if err = FindOrderById(db, id, &order); err != nil {
 			return http.StatusNotFound, err
+		} else if payload.TransactionId == nil {
+			return http.StatusNotAcceptable, errors.New("Transaction ID must be included!")
 		} else if order.Status != config.ACCEPTED {
 			return http.StatusNotAcceptable, errors.New("Order cannot be finished!")
-		}
+		} 
 		order.Status = config.FINISHED
 		db.Save(&order)
 		return http.StatusOK, nil

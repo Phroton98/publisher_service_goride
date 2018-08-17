@@ -8,20 +8,20 @@ const CANCELLED = "cancelled"
 
 // API
 const API_SUBSCRIBER = ""
-const API_GOPAY = ""
+const API_GOPAY = "https://go-pay-sea-cfx.herokuapp.com/api/"
 const API_USER = ""
 
 // Database
-const DB_HOST = ""
-const DB_PORT = ""
+const DB_HOST = "localhost"
+const DB_PORT = "5432"
 
 const DB_USER_PROD = ""
 const DB_PASS_PROD = ""
 const DB_NAME_PROD = ""
 
-const DB_USER_TEST = ""
-const DB_PASSWORD_TEST = ""
-const DB_NAME_TEST = ""
+const DB_USER_TEST = "joseph"
+const DB_PASS_TEST = "joseph"
+const DB_NAME_TEST = "order"
 
 // Environment
 const ENVIRONMENT = "test"

@@ -2,9 +2,14 @@ package order
 
 import (
     "fmt"
-    "net/http"
     "sort"
+    "strings"
+    "strconv"
+    "io/ioutil"
+    "net/url"
+    "net/http"
     "encoding/json"
+    "app.goride/config"
     "app.goride/model/driver"
     "app.goride/model/order"
     "github.com/gin-gonic/gin"
@@ -19,16 +24,15 @@ func CreateOrder(c *gin.Context) {
     var id int
     if err := c.ShouldBindJSON(&data); err == nil {
         listDriverAvailable := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER)
-        // if len(listDriverAvailable) == 0 {
-        //     c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
-        //     return
-        // }
+        if len(listDriverAvailable) == 0 {
+            c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
+            return
+        }
         driversJSON, _ := json.Marshal(listDriverAvailable)
         fmt.Println(driversJSON)
         if id, err = order.CreateOrder(data, MAX_DRIVER); err == nil {
             // TO DO
             // POST to Subscriber
-            // POST to GoPay
             c.JSON(http.StatusCreated, gin.H{
                 "message": "order created",
                 "order_id": id,
@@ -84,20 +88,66 @@ func UpdateOrder(c *gin.Context) {
 }
 
 func AcceptOrder(id string, data order.UpdatePayload, c *gin.Context) {
-    if status, err := order.AcceptOrder(id, data); err == nil {
-        c.JSON(status, gin.H{"message": "order accepted"})
+    if status, orderData, err := order.AcceptOrder(id, data); err == nil {
         // To Do
         // Post to subscriber
+        
+        // Post to Gopay
+        // Create path URL
+        path := "/transaction"
+        uString := CreateGopayPath(path)
+        // Create data request
+        dataRequest := CreateRequestPost(orderData)
+        // Creat client
+        client := &http.Client{}
+        request, _ := http.NewRequest("POST", uString, strings.NewReader(dataRequest.Encode()))
+        if resp, errResp := client.Do(request); errResp == nil {
+            defer resp.Body.Close()
+            body, _ := ioutil.ReadAll(resp.Body)
+            // Send response
+            c.JSON(status, body)
+        } else {
+            c.JSON(http.StatusInternalServerError, gin.H{"error_message": errResp.Error()})
+        }
     } else {
         c.JSON(status, gin.H{"error_message": err.Error()})
     }
 }
 
+func CreateGopayPath(path string) (string) {
+    u, _ := url.ParseRequestURI(config.API_GOPAY)
+    u.Path = path
+    return u.String()
+}
+
+func CreateRequestPost(orderData *order.Order) (url.Values) {
+    dataRequest := url.Values{}
+    dataRequest.Add("change_balance", strconv.Itoa(orderData.Price * -1))
+    dataRequest.Add("description", "trip to " + orderData.Destination)
+    dataRequest.Add("finished", "false")
+    dataRequest.Add("account", strconv.Itoa(orderData.UserId))
+    return dataRequest
+}
+
 func FinishOrder(id string, data order.UpdatePayload, c *gin.Context) {
-    if status, err := order.AcceptOrder(id, data); err == nil {
-        c.JSON(status, gin.H{"message": "order finished"})
+    if status, err := order.FinishOrder(id, data); err == nil {
         // To Do
         // Post to Go Pay Wallet
+        path := "/transaction" + strconv.Itoa(*data.TransactionId)
+        urlPath := CreateGopayPath(path)
+        // Create data request
+        dataRequest := url.Values{}
+        dataRequest.Add("finished", "true")
+        // Creat client
+        client := &http.Client{}
+        request, _ := http.NewRequest("POST", urlPath, strings.NewReader(dataRequest.Encode()))
+        if resp, errResp := client.Do(request); errResp == nil {
+            defer resp.Body.Close()
+            // Send response
+            c.JSON(status, gin.H{"message": "order finished"})
+        } else {
+            c.JSON(http.StatusInternalServerError, gin.H{"error_message": errResp.Error()})
+        }
     } else {
         c.JSON(status, gin.H{"error_message": err.Error()})
     }
