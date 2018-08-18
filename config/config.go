@@ -1,5 +1,7 @@
 package config
 
+import "os"
+
 // Constanta for order status
 const FINISHED = "finished"
 const QUEUEING = "queueing"
@@ -11,7 +13,7 @@ const API_SUBSCRIBER = ""
 const API_GOPAY = "https://go-pay-sea-cfx.herokuapp.com/api/"
 const API_USER = ""
 
-const PORT = "80"
+var PORT = os.Getenv("PORT")
 
 // Database
 const DB_HOST = "localhost"
