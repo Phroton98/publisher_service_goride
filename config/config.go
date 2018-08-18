@@ -24,6 +24,7 @@ const DB_PASSWORD = "joseph"
 const DB_NAME = "order"
 
 // Environment
-const ENVIRONMENT = "test"
+const ENVIRONMENT = "development"
 
+const HEROKU = true
 var DATABASE_URL = os.Getenv("DATABASE_URL")

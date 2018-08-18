@@ -24,20 +24,20 @@ func CreateOrder(c *gin.Context) {
     var id int
     if err := c.ShouldBindJSON(&data); err == nil {
         if listDriverAvailable, errDB := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER); errDB == nil {
+            driversJSON, _ := json.Marshal(listDriverAvailable)
+            // Testing
+            fmt.Println(len(listDriverAvailable))
+            fmt.Println(string(driversJSON))
             if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
                 c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
                 return
             }
-            driversJSON, _ := json.Marshal(listDriverAvailable)
-            fmt.Println(len(listDriverAvailable))
-            fmt.Println(driversJSON)
             if id, err = order.CreateOrder(data, MAX_DRIVER); err == nil {
                 // TO DO
                 // POST to Subscriber
                 c.JSON(http.StatusCreated, gin.H{
                     "message": "order created",
                     "order_id": id,
-                    "drivers": driversJSON,
                 })
             } else {
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
