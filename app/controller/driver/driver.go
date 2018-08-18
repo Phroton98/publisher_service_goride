@@ -3,7 +3,6 @@ package driver
 
 import (
     "strings"
-    "strconv"
     "net/http"
     "app.goride/model/driver"
     "github.com/gin-gonic/gin"
