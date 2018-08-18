@@ -11,6 +11,8 @@ const API_SUBSCRIBER = ""
 const API_GOPAY = "https://go-pay-sea-cfx.herokuapp.com/api/"
 const API_USER = ""
 
+const PORT = "80"
+
 // Database
 const DB_HOST = "localhost"
 const DB_PORT = "5432"

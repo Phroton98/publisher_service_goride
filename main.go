@@ -1,6 +1,7 @@
 package main
 
 import (
+    "app.goride/config"
     "app.goride/router"
     "github.com/gin-gonic/gin"
 )
@@ -13,5 +14,5 @@ func main() {
     app.GET("/", func (c *gin.Context) {
         c.JSON(200, gin.H{"message": "hello"})
     })
-    app.Run(":8080")
+    app.Run(":" + config.PORT)
 }
