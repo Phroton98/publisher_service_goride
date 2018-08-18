@@ -6,7 +6,6 @@ import (
     "errors"
     "strconv"
     "app.goride/app/helper"
-    // "github.com/jinzhu/gorm"
 )
 
 // JSON for UpdateLocation
@@ -69,7 +68,7 @@ func GetLocation(id string) (*DriverLocation, error) {
         defer db.Close()
         var driver DriverLocation
         db.Where("id = ?", id).First(&driver)
-        if driver == (DriverLocation{}) {
+        if driver != (DriverLocation{}) {
             return &driver, nil
         } else {
             return nil, errors.New("Driver not found!")
