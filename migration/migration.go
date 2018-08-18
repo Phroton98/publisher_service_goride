@@ -2,10 +2,11 @@ package migration
 
 import (
 	"log"
+	"app.goride/model/driver"
 	"app.goride/model/order"
 )
 
-func MigrateOne() {
+func CreateAllTable() {
 	db, err := order.ConnectDatabase()
 	if err != nil {
 		log.Fatal(err)
@@ -18,5 +19,8 @@ func MigrateOne() {
 	}
 	if !db.HasTable(&order.OrderFlag{}) {
 		db.CreateTable(&order.OrderFlag{})
+	}
+	if !db.HasTable(&driver.DriverLocation{}) {
+		db.CreateTable(&driver.DriverLocation{})
 	}
 }

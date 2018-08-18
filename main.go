@@ -1,14 +1,14 @@
 package main
 
 import (
-    // "app.goride/migration"
+    "app.goride/migration"
     "app.goride/config"
     "app.goride/router"
     "github.com/gin-gonic/gin"
 )
 
 func main() {
-    // migration.MigrateOne()
+    migration.CreateAllTable()
     app := gin.Default()
     router.AddRoutesDriver(app)
     router.AddRoutesOrder(app)

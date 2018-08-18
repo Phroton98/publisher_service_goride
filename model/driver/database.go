@@ -15,6 +15,10 @@ type DriverLocation struct {
     Timestamp int64 `json:"timestamp" gorm:"NOT NULL"`
 }
 
+func (DriverLocation) TableName() string {
+	return "locations"
+}
+
 func ConnectDatabase() (db *gorm.DB, err error) {
 	// var user, password, database string
 	db, err = gorm.Open("postgres", config.DATABASE_URL)
