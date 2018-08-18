@@ -89,9 +89,6 @@ func UpdateOrder(c *gin.Context) {
 
 func AcceptOrder(id string, data order.UpdatePayload, c *gin.Context) {
     if status, orderData, err := order.AcceptOrder(id, data); err == nil {
-        // To Do
-        // Post to subscriber
-        
         // Post to Gopay
         // Create path URL
         path := "/transaction"

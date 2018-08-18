@@ -1,7 +1,5 @@
 FROM golang:alpine
 
-# RUN apk update \
-#  && apk add --no-cache 
 RUN apk add --update tzdata bash wget curl git;
 RUN mkdir -p /go/src/bin && curl https://glide.sh/get | sh
 ADD . /go/src/app.goride
