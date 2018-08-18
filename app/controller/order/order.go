@@ -3,7 +3,6 @@ package order
 import (
     "fmt"
     "sort"
-    "config"
     "strings"
     "strconv"
     "io/ioutil"
