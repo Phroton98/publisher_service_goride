@@ -118,7 +118,7 @@ func FinishOrder(id string, data order.UpdatePayload, c *gin.Context) {
     if status, err := order.FinishOrder(id, data); err == nil {
         // To Do
         // Post to Go Pay Wallet
-        path := "/transaction" + strconv.Itoa(*data.TransactionId)
+        path := "/transaction/" + strconv.Itoa(*data.TransactionId)
         urlPath := CreateGopayPath(path)
         // Create data request
         dataRequest := url.Values{}
