@@ -19,15 +19,13 @@ func GetLocation(c *gin.Context) {
 }
 
 func UpdateLocation(c *gin.Context) {
-    driverID, err := strconv.Atoi(c.Param("id"))
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error_message": err.Error()})
-    }
+    // Variable
     var data driver.Location
-    if err = c.ShouldBindJSON(&data); err == nil {
+    driverID := c.Param("id")
+    // Check if request is right
+    if err := c.ShouldBindJSON(&data); err == nil {
         // Create new data
-        newData := driver.CreateDriverLocation(driverID, data)
-        if err := driver.SetLocation(&newData); err == nil {
+        if err = driver.SetLocation(data, driverID); err == nil {
             c.JSON(http.StatusOK, gin.H{
                 "status": strings.Join([]string{"user", strconv.Itoa(newData.ID), "location updated"}, " "),
             })

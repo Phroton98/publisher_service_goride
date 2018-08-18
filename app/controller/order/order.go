@@ -23,22 +23,25 @@ func CreateOrder(c *gin.Context) {
     var data order.OrderInformation
     var id int
     if err := c.ShouldBindJSON(&data); err == nil {
-        listDriverAvailable := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER)
-        if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
-            c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
-            return
-        }
-        driversJSON, _ := json.Marshal(listDriverAvailable)
-        fmt.Println(driversJSON)
-        if id, err = order.CreateOrder(data, MAX_DRIVER); err == nil {
-            // TO DO
-            // POST to Subscriber
-            c.JSON(http.StatusCreated, gin.H{
-                "message": "order created",
-                "order_id": id,
-            })
+        if listDriverAvailable, errDB := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER); errDB == nil {
+            if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
+                c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
+                return
+            }
+            driversJSON, _ := json.Marshal(listDriverAvailable)
+            fmt.Println(driversJSON)
+            if id, err = order.CreateOrder(data, MAX_DRIVER); err == nil {
+                // TO DO
+                // POST to Subscriber
+                c.JSON(http.StatusCreated, gin.H{
+                    "message": "order created",
+                    "order_id": id,
+                })
+            } else {
+                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            }
         } else {
-            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         }
     } else {
         c.JSON(http.StatusBadRequest, gin.H{"error_message":err.Error()})
@@ -170,14 +173,18 @@ func DeclineOrder(c *gin.Context) {
     }
 }
 
-func getNearestDriver(clientX float64, clientY float64, maxDriver int) []driver.DriverInformation {
-    listDriver := driver.GetDriverAround(THRESHOLD, clientX, clientY)
-    // Sort
-    sort.Slice(listDriver, func(i int, j int) bool {
-        return listDriver[i].Distance < listDriver[j].Distance
-    })
-    if len(listDriver) > maxDriver {
-        listDriver = listDriver[:maxDriver]
+func getNearestDriver(clientX float64, clientY float64, maxDriver int) ([]driver.DriverInformation, error) {
+    if listDriver, err := driver.GetDriverAround(THRESHOLD, clientX, clientY); err == nil {
+        // Sort
+        sort.Slice(listDriver, func(i int, j int) bool {
+            return listDriver[i].Distance < listDriver[j].Distance
+        })
+        if len(listDriver) > maxDriver {
+            listDriver = listDriver[:maxDriver]
+        }
+        return listDriver, nil
+    } else {
+        return nil, err
     }
-    return listDriver
+  
 }
