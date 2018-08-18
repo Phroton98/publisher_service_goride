@@ -1,0 +1,15 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+  db:
+    image: "postgres"
+    restart: always
+    environment:
+      POSTGRES_USER: publiser
+      POSTGRES_PASSWORD: publisher
+      POSTGRES_DB: order
+  redis:
+    image: "redis:alpine"

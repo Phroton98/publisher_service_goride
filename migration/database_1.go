@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"app.goride/publisher/model/order"
+	"app.goride/model/order"
 )
 
 func main() {
