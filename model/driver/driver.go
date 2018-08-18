@@ -3,6 +3,7 @@ package driver
 
 import (
     "time"
+    "app.goride/config"
     "strconv"
     "encoding/json"
     "app.goride/app/helper"
@@ -53,7 +54,7 @@ func CreateDriverLocation(id int, data Location) DriverLocation {
 
 func createClient() *redis.Client {
     return redis.NewClient(&redis.Options{
-        Addr:     "localhost:6379",
+        Addr: config.REDIS_URL,
         Password: "", 
         DB:       0,  
     })

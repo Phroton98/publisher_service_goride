@@ -3,6 +3,7 @@ package order
 import (
     "fmt"
     "sort"
+    "config"
     "strings"
     "strconv"
     "io/ioutil"
@@ -24,7 +25,7 @@ func CreateOrder(c *gin.Context) {
     var id int
     if err := c.ShouldBindJSON(&data); err == nil {
         listDriverAvailable := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER)
-        if len(listDriverAvailable) == 0 {
+        if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
             c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
             return
         }

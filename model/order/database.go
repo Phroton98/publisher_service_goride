@@ -49,21 +49,7 @@ func (OrderFlag) TableName() string {
 }
 
 func ConnectDatabase() (db *gorm.DB, err error) {
-	var user, password, database string
-	if config.ENVIRONMENT == "production" {
-		user = config.DB_USER_PROD
-		password = config.DB_PASS_PROD
-		database = config.DB_NAME_PROD
-	} else {
-		user = config.DB_USER_TEST
-		password = config.DB_PASS_TEST
-		database = config.DB_NAME_TEST
-	}
-	db, err = gorm.Open("postgres", 
-						"host=" + config.DB_HOST + 
-						" port=" + config.DB_PORT + 
-						" user=" + user +
-						" password=" + password + 
-						" dbname=" + database)
+	// var user, password, database string
+	db, err = gorm.Open("postgres", config.DATABASE_URL)
 	return db, err
 }

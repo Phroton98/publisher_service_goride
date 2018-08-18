@@ -19,13 +19,12 @@ var PORT = os.Getenv("PORT")
 const DB_HOST = "localhost"
 const DB_PORT = "5432"
 
-const DB_USER_PROD = ""
-const DB_PASS_PROD = ""
-const DB_NAME_PROD = ""
-
-const DB_USER_TEST = "joseph"
-const DB_PASS_TEST = "joseph"
-const DB_NAME_TEST = "order"
+const DB_USER = "joseph"
+const DB_PASSWORD = "joseph"
+const DB_NAME = "order"
 
 // Environment
 const ENVIRONMENT = "test"
+
+var DATABASE_URL = os.Getenv("DATABASE_URL")
+var REDIS_URL = os.Getenv("REDIS_URL")

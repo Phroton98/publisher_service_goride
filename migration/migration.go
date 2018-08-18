@@ -5,7 +5,7 @@ import (
 	"app.goride/model/order"
 )
 
-func main() {
+func MigrateOne() {
 	db, err := order.ConnectDatabase()
 	if err != nil {
 		log.Fatal(err)
