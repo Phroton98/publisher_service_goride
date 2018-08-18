@@ -109,6 +109,8 @@ func CancelOrder(id string, payload CancelPayload) (int, error) {
 			return http.StatusNotFound, err
 		} else if order.Status == config.CANCELLED || order.Status == config.FINISHED || order.Status == config.CONFIRMED {
 			return http.StatusNotAcceptable, errors.New("Order cannot be cancelled")
+		} else if order.UserId != payload.UserId {
+			return http.StatusNotAcceptable, errors.New("User not authenticated")
 		}
 		order.Status = config.CANCELLED
 		db.Save(&order)
