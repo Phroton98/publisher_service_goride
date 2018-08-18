@@ -13,6 +13,10 @@ type RequestSubs struct {
 	DriverData []driver.DriverInformation `json:"DriverData"`
 }
 
+type RequestInvalid struct {
+	OrderID int `json:"OrderId"`
+}
+
 type RequestGopay struct {
 	User string `json:"user"`
 	Balance int `json:"changed_balance"`
@@ -36,4 +40,8 @@ func CreateRequestSubs(order *Order, listDriver []driver.DriverInformation, dist
 		TransactionID: transID,
 		DriverData: listDriver,
 	}
+}
+
+func CreateRequestInvalid(id int) (RequestInvalid) {
+	return RequestInvalid{OrderID: id}
 }

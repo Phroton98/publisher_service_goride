@@ -75,6 +75,26 @@ func SendOrderSubscriber(orderData *order.Order, listDriver []driver.DriverInfor
     }
 }
 
+func SendInvalidate(id int) (error) {
+    // Create path and body
+    urlPath := CreateSubsPath("/invalidate")
+    requestBody := order.CreateRequestInvalid(id)
+    jsonValue, _ := json.Marshal(requestBody)
+    // Create Request
+    request, _ := http.NewRequest("POST", urlPath, bytes.NewBuffer(jsonValue))
+    request.Header.Set("Content-Type", "application/json")
+    // Create Client
+    client := &http.Client{}
+    if response, err := client.Do(request); err == nil {
+        defer response.Body.Close()
+        body, _ := ioutil.ReadAll(response.Body)
+        fmt.Println(string(body))
+        return nil
+    } else {
+        return err
+    }
+}
+
 func CreateOrder(c *gin.Context) {
     var data order.OrderInformation
     if err := c.ShouldBindJSON(&data); err == nil {
@@ -127,13 +147,18 @@ func GetOrder(c *gin.Context) {
 
 func CancelOrder(c *gin.Context) {
     orderID := c.Param("id")
+    intId, _ := strconv.Atoi(orderID)
     var data order.CancelPayload
     if err := c.ShouldBindJSON(&data); err == nil {
         var status int
         if status, err = order.CancelOrder(orderID, data); err == nil {
-            c.JSON(status, gin.H{"message": "order cancelled"})
             // TO DO
             // Send request to Subscriber
+            if err = SendInvalidate(intId); err == nil {
+                c.JSON(status, gin.H{"message": "order cancelled"})
+            } else {
+                c.JSON(http.StatusInternalServerError, gin.H{"error_message": err.Error()})
+            }
         } else {
             c.JSON(status, gin.H{"error_message": err.Error()})
         }
@@ -160,7 +185,12 @@ func UpdateOrder(c *gin.Context) {
 
 func AcceptOrder(id string, data order.UpdatePayload, c *gin.Context) {
     if status, err := order.AcceptOrder(id, data); err == nil {
-        c.JSON(status, gin.H{"message": "order accepted"})
+        intId, _ := strconv.Atoi(id)
+        if err = SendInvalidate(intId); err == nil {
+            c.JSON(status, gin.H{"message": "order accepted"})
+        } else {
+            c.JSON(http.StatusInternalServerError, gin.H{"error_message": err.Error()})
+        }
     } else {
         c.JSON(status, gin.H{"error_message": err.Error()})
     }
