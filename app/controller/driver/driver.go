@@ -27,7 +27,7 @@ func UpdateLocation(c *gin.Context) {
         // Create new data
         if err = driver.SetLocation(data, driverID); err == nil {
             c.JSON(http.StatusOK, gin.H{
-                "status": strings.Join([]string{"user", strconv.Itoa(newData.ID), "location updated"}, " "),
+                "status": strings.Join([]string{"user", driverID, "location updated"}, " "),
             })
         } else {
             c.JSON(http.StatusInternalServerError, gin.H{"error_message": err.Error()})
