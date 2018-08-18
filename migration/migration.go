@@ -11,7 +11,7 @@ func CreateAllTable() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db.DropTableIfExists(&order.OrderFlag{}, &order.OrderLocation{}, &order.Order{}, &driver.DriverLocation{})
+	// db.DropTableIfExists(&order.OrderFlag{}, &order.OrderLocation{}, &order.Order{}, &driver.DriverLocation{})
 	
 	if !db.HasTable(&order.Order{}) {
 		db.CreateTable(&order.Order{})
