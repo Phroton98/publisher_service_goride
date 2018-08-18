@@ -29,6 +29,7 @@ func CreateOrder(c *gin.Context) {
                 return
             }
             driversJSON, _ := json.Marshal(listDriverAvailable)
+            fmt.Println(len(listDriverAvailable))
             fmt.Println(driversJSON)
             if id, err = order.CreateOrder(data, MAX_DRIVER); err == nil {
                 // TO DO
@@ -36,6 +37,7 @@ func CreateOrder(c *gin.Context) {
                 c.JSON(http.StatusCreated, gin.H{
                     "message": "order created",
                     "order_id": id,
+                    "drivers": driversJSON,
                 })
             } else {
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

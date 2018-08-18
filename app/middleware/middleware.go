@@ -1,10 +1,10 @@
 package middleware
 
 import "github.com/gin-gonic/gin"
-import "fmt"
+// import "fmt"
 
 func AuthRequired(c *gin.Context) {
-	fmt.Println("Hello")
+	// fmt.Println("Hello")
 	// To Do Check Authentication
 	c.Next()
 }
