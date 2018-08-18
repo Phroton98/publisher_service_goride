@@ -1,13 +1,17 @@
 package order
 
 import (
+    "fmt"
     "sort"
+    "bytes"
     "strings"
     "strconv"
     "net/url"
     "net/http"
-    // "encoding/json"
+    "io/ioutil"
+    "encoding/json"
     "app.goride/config"
+    "app.goride/app/helper"
     "app.goride/model/driver"
     "app.goride/model/order"
     "github.com/gin-gonic/gin"
@@ -17,11 +21,64 @@ import (
 const THRESHOLD = 1000 // In Metres
 const MAX_DRIVER = 30
 
+func CreateGopayPath(path string) (string) {
+    u, _ := url.ParseRequestURI(config.API_GOPAY)
+    u.Path = path
+    return u.String()
+}
+
+func CreateSubsPath(path string) (string) {
+    u, _ := url.ParseRequestURI(config.API_SUBSCRIBER)
+    u.Path = path
+    return u.String()
+}
+
+func CreateTransaction(orderData *order.Order, username string) (int, error) {
+    // Create path and body
+    urlPath := CreateGopayPath("/api/transactions/")
+    requestBody := order.CreateTransactionBody(username, orderData)
+    jsonValue, _ := json.Marshal(requestBody)
+    // Create Request
+    request, _ := http.NewRequest("POST", urlPath, bytes.NewBuffer(jsonValue))
+    request.Header.Set("Content-Type", "application/json")
+    // Create client
+    client := &http.Client{}
+    if response, err := client.Do(request); err == nil {
+        defer response.Body.Close()
+        body, _ := ioutil.ReadAll(response.Body)
+        // Response struct
+        var responseStruct order.RespCreateTransaction
+        json.Unmarshal(body, &responseStruct)
+        return responseStruct.ID, nil
+    } else {
+        return -1, err
+    }
+}
+
+func SendOrderSubscriber(orderData *order.Order, listDriver []driver.DriverInformation, distance int, transID int) (error) {
+    urlPath := CreateSubsPath("/order")
+    requestBody := order.CreateRequestSubs(orderData, listDriver, distance, transID)
+    jsonValue, _ := json.Marshal(requestBody)
+    fmt.Println(string(jsonValue))
+    // Create Request
+    request, _ := http.NewRequest("POST", urlPath, bytes.NewBuffer(jsonValue))
+    request.Header.Set("Content-Type", "application/json")
+    // Create Client
+    client := &http.Client{}
+    if response, err := client.Do(request); err == nil {
+        defer response.Body.Close()
+        body, _ := ioutil.ReadAll(response.Body)
+        fmt.Println(string(body))
+        return nil
+    } else {
+        return err
+    }
+}
+
 func CreateOrder(c *gin.Context) {
     var data order.OrderInformation
     if err := c.ShouldBindJSON(&data); err == nil {
         if listDriverAvailable, errDB := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER); errDB == nil {
-            // driversJSON, _ := json.Marshal(listDriverAvailable)
             // Checking list Driver
             if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
                 c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
@@ -29,12 +86,24 @@ func CreateOrder(c *gin.Context) {
             }
             if orderData, err := order.CreateOrder(data, MAX_DRIVER); err == nil {
                 // TO DO
-                // POST to Subscriber
-                // Response OK
-                c.JSON(http.StatusCreated, gin.H{
-                    "message": "order created",
-                    "order_id": int(orderData.ID),
-                })
+                // POST To Gopay
+                var id int
+                if id, err = CreateTransaction(orderData, data.UserName); err == nil {
+                    // POST to Subscriber
+                    distance := helper.GetDistance(data.OriginX, data.OriginY, data.DestX, data.DestY)
+                    if err = SendOrderSubscriber(orderData, listDriverAvailable, distance, id); err == nil {
+                        // Response OK
+                        c.JSON(http.StatusCreated, gin.H{
+                            "message": "order created",
+                            "order_id": int(orderData.ID),
+                            "transaction_id": id,
+                        })
+                    } else {
+                        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                    }
+                } else {
+                    c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                } 
             } else {
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
             }
@@ -97,26 +166,11 @@ func AcceptOrder(id string, data order.UpdatePayload, c *gin.Context) {
     }
 }
 
-func CreateGopayPath(path string) (string) {
-    u, _ := url.ParseRequestURI(config.API_GOPAY)
-    u.Path = path
-    return u.String()
-}
-
-func CreateRequestPost(orderData *order.Order) (url.Values) {
-    dataRequest := url.Values{}
-    dataRequest.Add("change_balance", strconv.Itoa(orderData.Price * -1))
-    dataRequest.Add("description", "trip to " + orderData.Destination)
-    dataRequest.Add("finished", "false")
-    dataRequest.Add("account", strconv.Itoa(orderData.UserId))
-    return dataRequest
-}
-
 func FinishOrder(id string, data order.UpdatePayload, c *gin.Context) {
     if status, err := order.FinishOrder(id, data); err == nil {
         // To Do
         // Post to Go Pay Wallet
-        path := "/transaction/" + strconv.Itoa(*data.TransactionId)
+        path := "/api/transaction/" + strconv.Itoa(*data.TransactionId)
         urlPath := CreateGopayPath(path)
         // Create data request
         dataRequest := url.Values{}

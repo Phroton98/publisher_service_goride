@@ -11,6 +11,7 @@ import (
 // JSON for UserInformation Given
 type OrderInformation struct {
 	UserId int `json:"user_id" binding:"required"`
+	UserName string `json:"user_name" binding:"required"`
 	Origin string `json:"origin" binding:"required"`
     OriginX float64 `json:"x" binding:"required"`
     OriginY float64 `json:"y" binding:"required"`

@@ -10,9 +10,8 @@ const FINISHED = "finished"
 const CANCELLED = "cancelled"
 
 // API
-const API_SUBSCRIBER = ""
-const API_GOPAY = "https://go-pay-sea-cfx.herokuapp.com/api/"
-const API_USER = ""
+const API_SUBSCRIBER = "https://goridepay-driverworker.herokuapp.com"
+const API_GOPAY = "https://go-pay-sea-cfx.herokuapp.com"
 
 var PORT = os.Getenv("PORT")
 
@@ -27,5 +26,5 @@ const DB_NAME = "order"
 // Environment
 const ENVIRONMENT = "development"
 
-const HEROKU = true
+const HEROKU = false
 var DATABASE_URL = os.Getenv("DATABASE_URL")

@@ -99,6 +99,7 @@
     ```json
     {
         "user_id": 1, 
+        "user_name": "compfest",
         "x": 3.0, 
         "y": 4.0, 
         "origin": "jakarta", 

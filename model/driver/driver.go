@@ -17,8 +17,8 @@ type Location struct {
 }
 
 type DriverInformation struct {
-    ID int `json:"id"`
-    Distance int `json:"distance"`
+    ID int `json:"DriverID"`
+    Distance int `json:"OriginDistance"`
 }
 
 func CreateDriverInformation(loc DriverLocation, distance int) DriverInformation {
