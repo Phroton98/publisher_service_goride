@@ -3,9 +3,10 @@ package config
 import "os"
 
 // Constanta for order status
-const FINISHED = "finished"
 const QUEUEING = "queueing"
 const ACCEPTED = "accepted"
+const CONFIRMED = "confirmed"
+const FINISHED = "finished"
 const CANCELLED = "cancelled"
 
 // API

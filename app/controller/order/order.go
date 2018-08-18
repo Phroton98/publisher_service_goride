@@ -5,7 +5,6 @@ import (
     "sort"
     "strings"
     "strconv"
-    "io/ioutil"
     "net/url"
     "net/http"
     "encoding/json"
@@ -21,23 +20,23 @@ const MAX_DRIVER = 30
 
 func CreateOrder(c *gin.Context) {
     var data order.OrderInformation
-    var id int
     if err := c.ShouldBindJSON(&data); err == nil {
         if listDriverAvailable, errDB := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER); errDB == nil {
             driversJSON, _ := json.Marshal(listDriverAvailable)
             // Testing
             fmt.Println(len(listDriverAvailable))
             fmt.Println(string(driversJSON))
+            // Checking
             if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
                 c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
                 return
             }
-            if id, err = order.CreateOrder(data, MAX_DRIVER); err == nil {
+            if orderData, err := order.CreateOrder(data, MAX_DRIVER); err == nil {
                 // TO DO
                 // POST to Subscriber
                 c.JSON(http.StatusCreated, gin.H{
                     "message": "order created",
-                    "order_id": id,
+                    "order_id": int(orderData.ID),
                 })
             } else {
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -93,24 +92,8 @@ func UpdateOrder(c *gin.Context) {
 }
 
 func AcceptOrder(id string, data order.UpdatePayload, c *gin.Context) {
-    if status, orderData, err := order.AcceptOrder(id, data); err == nil {
-        // Post to Gopay
-        // Create path URL
-        path := "/transaction"
-        uString := CreateGopayPath(path)
-        // Create data request
-        dataRequest := CreateRequestPost(orderData)
-        // Creat client
-        client := &http.Client{}
-        request, _ := http.NewRequest("POST", uString, strings.NewReader(dataRequest.Encode()))
-        if resp, errResp := client.Do(request); errResp == nil {
-            defer resp.Body.Close()
-            body, _ := ioutil.ReadAll(resp.Body)
-            // Send response
-            c.JSON(status, body)
-        } else {
-            c.JSON(http.StatusInternalServerError, gin.H{"error_message": errResp.Error()})
-        }
+    if status, err := order.AcceptOrder(id, data); err == nil {
+        c.JSON(status, gin.H{"message": "order accepted"})
     } else {
         c.JSON(status, gin.H{"error_message": err.Error()})
     }

@@ -30,7 +30,6 @@ type CancelPayload struct {
 type DeclinePayload struct {
 	UserId int `json:"user_id" binding:"required"`
 	UserToken string `json:"user_token" binding:"required"`
-	TransactionId int `json:"transaction_id"`
 }
 
 type UpdatePayload struct {
@@ -42,12 +41,11 @@ type UpdatePayload struct {
 	TransactionId *int `json:"transaction_id,omitempty"`
 }
 
-func CreateOrder(u OrderInformation, totalDriver int) (int, error) {
+func CreateOrder(u OrderInformation, totalDriver int) (*Order, error) {
 	db, err := ConnectDatabase()
 	defer db.Close()
 	if err != nil {
-		orderId := 0
-		return orderId, err
+		return nil, err
 	}
 	order := Order{
 		UserId: u.UserId,
@@ -72,8 +70,7 @@ func CreateOrder(u OrderInformation, totalDriver int) (int, error) {
 	}
 	db.Create(&orderLocation)
 	db.Create(&orderFlag)
-	orderId := int(order.ID)
-	return orderId, nil
+	return &order, nil
 }
 
 func GetOrder(id string) (*Order, error) {
@@ -116,7 +113,7 @@ func CancelOrder(id string, payload CancelPayload) (int, error) {
 		var order Order
 		if err = FindOrderById(db, id, &order); err != nil {
 			return http.StatusNotFound, err
-		} else if order.Status == config.CANCELLED || order.Status == config.FINISHED {
+		} else if order.Status == config.CANCELLED || order.Status == config.FINISHED || order.Status == config.CONFIRMED {
 			return http.StatusNotAcceptable, errors.New("Order cannot be cancelled")
 		}
 		order.Status = config.CANCELLED
@@ -125,20 +122,20 @@ func CancelOrder(id string, payload CancelPayload) (int, error) {
 	}
 }
 
-func AcceptOrder(id string, payload UpdatePayload) (int, *Order, error) {
+func AcceptOrder(id string, payload UpdatePayload) (int, error) {
 	if db, err := ConnectDatabase(); err != nil {
-		return http.StatusInternalServerError, nil, err
+		return http.StatusInternalServerError, err
 	} else {
 		defer db.Close()
 		var order Order
 		if err = FindOrderById(db, id, &order); err != nil {
-			return http.StatusNotFound, nil, err
+			return http.StatusNotFound, err
 		} else if order.Status != config.QUEUEING {
-			return http.StatusNotAcceptable, nil, errors.New("Order cannot be accepted!")
+			return http.StatusNotAcceptable, errors.New("Order cannot be accepted!")
 		}
 		order.Status = config.ACCEPTED
 		db.Save(&order)
-		return http.StatusOK, &order, nil
+		return http.StatusOK, nil
 	}
 }
 

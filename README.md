@@ -22,6 +22,7 @@
         "error_message": "message error"
     }
     ```
+
 * Get Location
     * GET /api/location/:id
     * Response OK (200)
@@ -63,6 +64,7 @@
         "error_message": "message error"
     }
     ```
+
 * Get Order
     * GET /api/order/:id
     * Response (OK)
@@ -87,9 +89,10 @@
         "error_message": "message error"
     }
     ```
+
 * Cancel Order
     * DELETE /api/order/:id
-    * Request Body
+    * Request Body (Witouth )
     ```json
     {"user_id":1, "user_token":"1"}
     ```
@@ -100,6 +103,44 @@
     }
     ```
     * Response Error (BadRequest, dkk)
+    ```json
+    {
+        "error_message": "message error"
+    }
+    ```
+
+* Update Order
+    * PUT /api/order/:id
+    * Request Body (status => accept, finish, confirm) accept waktu terima, confirm waktu mulai ke destination, finish waktu order selesai
+    ```json
+    { "status":"accept", "user_id":1, "user_token":"1", "driver_id":1, "driver_token":"1"}
+    ```
+    * Response OK (200)
+    ```json
+    {
+        "message": "order xxx"
+    }
+    ```
+    * Response Error (Etc)
+    ```json
+    {
+        "error_message": "message error"
+    }
+    ```
+
+* Decline Order
+    * POST /api/order/decline/:id
+    * Request Body
+    ```json
+    {"user_id": 1, "user_token": "1"}
+    ```
+    * Response OK
+    ```json
+    {
+        "message": "order declined"
+    }
+    ```
+    * Response  Error
     ```json
     {
         "error_message": "message error"
