@@ -11,8 +11,7 @@
     {
         "x": 3, 
         "y": 4, 
-        "available": true, 
-        "token": "5"
+        "available": true
         }
     ```
     * Response OK (200)
@@ -34,7 +33,6 @@
     ```json
     {
         "id": 1,
-        "token": "5",
         "x": 3,
         "y": 4,
         "available": true,
@@ -50,14 +48,13 @@
 
 * Update Order
     * PUT /api/order/:id
-    * Request Body (status => accept, finish, confirm) accept waktu terima, confirm waktu mulai ke destination, finish waktu order selesai
+    * Request Body (status => accept, finish) accept waktu terima waktu mulai ke destination, finish waktu order selesai
     ```json
     { 
         "status": "accept", 
         "user_id": 1, 
-        "user_token": "1", 
-        "driver_id": 1, 
-        "driver_token": "1"
+        "driver_id": 1,
+        "transaction_id": "must have when finish"
     }
     ```
     * Response OK (200)
@@ -78,8 +75,7 @@
     * Request Body
     ```json
     {
-        "user_id": 1,
-        "user_token": "1"
+        "user_id": 1
     }
     ```
     * Response OK
@@ -103,7 +99,6 @@
     ```json
     {
         "user_id": 1, 
-        "user_token": "1", 
         "x": 3.0, 
         "y": 4.0, 
         "origin": "jakarta", 
@@ -135,9 +130,7 @@
     {
         "ID": 3,
         "UserId": 1,
-        "UserToken": "1",
         "DriverId": 0,
-        "DriverToken": "",
         "Origin": "jakarta",
         "Destination": "bandung",
         "Price": 10000,
@@ -159,7 +152,6 @@
     ```json
     {
         "user_id":1, 
-        "user_token":"1"
     }
     ```
     * Response (200)

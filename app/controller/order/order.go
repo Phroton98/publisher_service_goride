@@ -1,13 +1,12 @@
 package order
 
 import (
-    "fmt"
     "sort"
     "strings"
     "strconv"
     "net/url"
     "net/http"
-    "encoding/json"
+    // "encoding/json"
     "app.goride/config"
     "app.goride/model/driver"
     "app.goride/model/order"
@@ -22,11 +21,8 @@ func CreateOrder(c *gin.Context) {
     var data order.OrderInformation
     if err := c.ShouldBindJSON(&data); err == nil {
         if listDriverAvailable, errDB := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER); errDB == nil {
-            driversJSON, _ := json.Marshal(listDriverAvailable)
-            // Testing
-            fmt.Println(len(listDriverAvailable))
-            fmt.Println(string(driversJSON))
-            // Checking
+            // driversJSON, _ := json.Marshal(listDriverAvailable)
+            // Checking list Driver
             if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
                 c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
                 return
@@ -34,6 +30,7 @@ func CreateOrder(c *gin.Context) {
             if orderData, err := order.CreateOrder(data, MAX_DRIVER); err == nil {
                 // TO DO
                 // POST to Subscriber
+                // Response OK
                 c.JSON(http.StatusCreated, gin.H{
                     "message": "order created",
                     "order_id": int(orderData.ID),
@@ -49,6 +46,7 @@ func CreateOrder(c *gin.Context) {
     }
 }
 
+// Tested
 func GetOrder(c *gin.Context) {
     orderID := c.Param("id")
     if order, err := order.GetOrder(orderID); err == nil {

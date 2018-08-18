@@ -10,9 +10,7 @@ import (
 type Order struct {
 	ID			uint `gorm:"AUTO_INCREMENT;unique_index;primary_key"`
 	UserId		int `gorm:"NOT NULL"`
-	UserToken	string `gorm:"NOT NULL"`
 	DriverId	int
-	DriverToken	string 
 	Origin		string `gorm:"NOT NULL"`
 	Destination	string `gorm:"NOT NULL"`
 	Price		int `gorm:"NOT NULL;DEFAULT:0" `

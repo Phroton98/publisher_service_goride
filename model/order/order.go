@@ -11,7 +11,6 @@ import (
 // JSON for UserInformation Given
 type OrderInformation struct {
 	UserId int `json:"user_id" binding:"required"`
-	UserToken string `json:"user_token" binding:"required"`
 	Origin string `json:"origin" binding:"required"`
     OriginX float64 `json:"x" binding:"required"`
     OriginY float64 `json:"y" binding:"required"`
@@ -24,20 +23,16 @@ type OrderInformation struct {
 
 type CancelPayload struct {
 	UserId int `json:"user_id" binding:"required"`
-	UserToken string `json:"user_token" binding:"required"`
 }
 
 type DeclinePayload struct {
 	UserId int `json:"user_id" binding:"required"`
-	UserToken string `json:"user_token" binding:"required"`
 }
 
 type UpdatePayload struct {
 	Status string `json:"status" binding:"required"`
 	UserId int `json:"user_id" binding:"required"`
-	UserToken string `json:"user_token" binding:"required"`
 	DriverId int `json:"driver_id" binding:"required"`
-	DriverToken string `json:"driver_token" binding:"required"`
 	TransactionId *int `json:"transaction_id,omitempty"`
 }
 
@@ -49,7 +44,6 @@ func CreateOrder(u OrderInformation, totalDriver int) (*Order, error) {
 	}
 	order := Order{
 		UserId: u.UserId,
-		UserToken: u.UserToken,
 		Origin: u.Origin,
 		Destination: u.Destination,
 		Price: u.Price,
@@ -134,6 +128,7 @@ func AcceptOrder(id string, payload UpdatePayload) (int, error) {
 			return http.StatusNotAcceptable, errors.New("Order cannot be accepted!")
 		}
 		order.Status = config.ACCEPTED
+		order.DriverId = payload.DriverId
 		db.Save(&order)
 		return http.StatusOK, nil
 	}
@@ -170,7 +165,7 @@ func DeclineOrder(id string, payload DeclinePayload) (int, int, error) {
 		}
 		// Find related order
 		db.Model(&orderFlag).Related(&order)
-		if order.UserId != payload.UserId || order.UserToken != payload.UserToken {
+		if order.UserId != payload.UserId {
 			return http.StatusNotFound, -1, errors.New("User doesn't match")
 		}
 		if (orderFlag.Flag <= 0) {

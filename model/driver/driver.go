@@ -14,19 +14,16 @@ type Location struct {
     X float64 `json:"x" binding:"required"`
     Y float64 `json:"y" binding:"required"`
     Available bool `json:"available" binding:"required"`
-    Token string `json:"token" binding:"required"` 
 }
 
 type DriverInformation struct {
     ID int `json:"id"`
-    Token string `json:"token"`
     Distance int `json:"distance"`
 }
 
 func CreateDriverInformation(loc DriverLocation, distance int) DriverInformation {
     return DriverInformation{
         ID: loc.ID, 
-        Token: loc.Token,
         Distance: distance,
     }
 }   
@@ -35,7 +32,6 @@ func CreateDriverLocation(data Location, strID string) (DriverLocation) {
     id, _ := strconv.Atoi(strID)
     return DriverLocation{
         ID: id,
-        Token: data.Token,
         X: data.X,
         Y: data.Y,
         Available: &data.Available,
