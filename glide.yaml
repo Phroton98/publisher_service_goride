@@ -1,4 +1,5 @@
 package: app.goride/publisher
+vcs: git
 import:
 - package: github.com/gin-gonic/gin
   version: master
