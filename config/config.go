@@ -27,5 +27,5 @@ const DB_NAME = "order"
 // Environment
 const ENVIRONMENT = "development"
 
-const HEROKU = false
+const HEROKU = true
 var DATABASE_URL = os.Getenv("DATABASE_URL")
