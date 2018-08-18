@@ -1,6 +1,7 @@
 version: '3'
 services:
   web:
+    image: "goride_app:1"
     build: .
     ports:
       - "8080:8080"
