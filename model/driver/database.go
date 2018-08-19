@@ -20,7 +20,7 @@ func (DriverLocation) TableName() string {
 
 func ConnectDatabase() (db *gorm.DB, err error) {
 	// var user, password, database string
-	if config.HEROKU {
+	if config.HEROKU == "true" {
 		db, err = gorm.Open("postgres", config.DATABASE_URL)
 	} else {
 		db, err = gorm.Open("postgres", "host=" + config.DB_HOST + " port=" + config.DB_PORT + " user=" + config.DB_USER + " dbname=" + config.DB_NAME + " password=" + config.DB_PASSWORD)

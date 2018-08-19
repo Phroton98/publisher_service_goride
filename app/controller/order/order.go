@@ -4,7 +4,6 @@ import (
     "fmt"
     "sort"
     "bytes"
-    "strings"
     "strconv"
     "net/url"
     "net/http"
@@ -55,6 +54,28 @@ func CreateTransaction(orderData *order.Order, username string) (int, error) {
     }
 }
 
+func CancelTransaction(id string) {
+    urlPath := CreateGopayPath("/api/transactions/" + id)
+    request, _ := http.NewRequest("DELETE", urlPath, bytes.NewBuffer([]byte("")))
+    client := &http.Client{}
+    response, _ := client.Do(request)
+    body, _ := ioutil.ReadAll(response.Body)
+    fmt.Println(string(body))
+    response.Body.Close()
+}
+
+func FinishTransaction(id string) {
+    urlPath := CreateGopayPath("/api/transactions/" + id)
+    jsonValue := []byte(`{"finished":true}`)
+    // Create Request
+    request, _ := http.NewRequest("POST", urlPath, bytes.NewBuffer(jsonValue))
+    client := &http.Client{}
+    response, _ := client.Do(request)
+    body, _ := ioutil.ReadAll(response.Body)
+    fmt.Println(string(body))
+    response.Body.Close()
+}
+
 func SendOrderSubscriber(orderData *order.Order, listDriver []driver.DriverInformation, distance int, transID int) (error) {
     urlPath := CreateSubsPath("/order")
     requestBody := order.CreateRequestSubs(orderData, listDriver, distance, transID)
@@ -97,45 +118,51 @@ func SendInvalidate(id int) (error) {
 
 func CreateOrder(c *gin.Context) {
     var data order.OrderInformation
-    if err := c.ShouldBindJSON(&data); err == nil {
-        if listDriverAvailable, errDB := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER); errDB == nil {
-            // Checking list Driver
-            if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
-                c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
-                return
-            }
-            if orderData, err := order.CreateOrder(data, MAX_DRIVER); err == nil {
-                // TO DO
-                // POST To Gopay
-                var id int
-                if id, err = CreateTransaction(orderData, data.UserName); err == nil {
-                    // POST to Subscriber
-                    distance := helper.GetDistance(data.OriginX, data.OriginY, data.DestX, data.DestY)
-                    if err = SendOrderSubscriber(orderData, listDriverAvailable, distance, id); err == nil {
-                        // Response OK
-                        c.JSON(http.StatusCreated, gin.H{
-                            "message": "order created",
-                            "order_id": int(orderData.ID),
-                            "transaction_id": id,
-                        })
-                    } else {
-                        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-                    }
-                } else {
-                    c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-                } 
-            } else {
-                c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-            }
+    err := c.ShouldBindJSON(&data)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error_message":err.Error()})
+        return 
+    }
+    // Get nearest driver
+    listDriverAvailable, errDB := getNearestDriver(data.OriginX, data.OriginY, MAX_DRIVER)
+    if errDB != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+    // Check if there is driver available
+    if len(listDriverAvailable) == 0 && config.ENVIRONMENT != "test" {
+        c.JSON(http.StatusNotFound, gin.H{"error": "drivers not found"})
+        return
+    }
+    // Get distance
+    distance := helper.GetDistance(data.OriginX, data.OriginY, data.DestX, data.DestY)
+    if orderData, err := order.CreateOrder(data, MAX_DRIVER); err == nil {
+        // POST To Gopay
+        var id = -1
+        // Check if pay with GoPay
+        if (*data.GoPay == true) {
+            id, err = CreateTransaction(orderData, data.UserName)
+            if err != nil {
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                return 
+            } 
+        } 
+        // POST to Subscriber
+        if err = SendOrderSubscriber(orderData, listDriverAvailable, distance, id); err == nil {
+            // Response OK
+            c.JSON(http.StatusCreated, gin.H{
+                "message": "order created",
+                "order_id": int(orderData.ID),
+                "transaction_id": id,
+            })
         } else {
             c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         }
     } else {
-        c.JSON(http.StatusBadRequest, gin.H{"error_message":err.Error()})
-    }
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+    }    
 }
 
-// Tested
 func GetOrder(c *gin.Context) {
     orderID := c.Param("id")
     if order, err := order.GetOrder(orderID); err == nil {
@@ -146,24 +173,31 @@ func GetOrder(c *gin.Context) {
 }
 
 func CancelOrder(c *gin.Context) {
+    // Get request body
     orderID := c.Param("id")
     intId, _ := strconv.Atoi(orderID)
     var data order.CancelPayload
-    if err := c.ShouldBindJSON(&data); err == nil {
-        var status int
-        if status, err = order.CancelOrder(orderID, data); err == nil {
-            // TO DO
-            // Send request to Subscriber
-            if err = SendInvalidate(intId); err == nil {
-                c.JSON(status, gin.H{"message": "order cancelled"})
-            } else {
-                c.JSON(http.StatusInternalServerError, gin.H{"error_message": err.Error()})
-            }
-        } else {
-            c.JSON(status, gin.H{"error_message": err.Error()})
-        }
-    } else {
+    err := c.ShouldBindJSON(&data)
+    if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error_message": err.Error()})
+        return
+    }
+    // Cancel Order
+    var status int
+    status, err = order.CancelOrder(orderID, data)
+    if err != nil {
+        c.JSON(status, gin.H{"error_message": err.Error()})
+        return
+    }
+    // Cancel Transaction
+    if data.TransactionId > 0 {
+        CancelTransaction(strconv.Itoa(data.TransactionId))
+    }
+    // Send request to Subscriber
+    if err = SendInvalidate(intId); err == nil {
+        c.JSON(status, gin.H{"message": "order canceled"})
+    } else {
+        c.JSON(http.StatusInternalServerError, gin.H{"error_message": err.Error()})
     }
 }
 
@@ -184,8 +218,14 @@ func UpdateOrder(c *gin.Context) {
 }
 
 func AcceptOrder(id string, data order.UpdatePayload, c *gin.Context) {
+    if errDriver := driver.ChangeAvailable(data.DriverId, false); errDriver != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error_message": errDriver.Error()})
+        return 
+    }
+    // Accepting Order
     if status, err := order.AcceptOrder(id, data); err == nil {
         intId, _ := strconv.Atoi(id)
+        // Post to subscriber
         if err = SendInvalidate(intId); err == nil {
             c.JSON(status, gin.H{"message": "order accepted"})
         } else {
@@ -197,27 +237,19 @@ func AcceptOrder(id string, data order.UpdatePayload, c *gin.Context) {
 }
 
 func FinishOrder(id string, data order.UpdatePayload, c *gin.Context) {
-    if status, err := order.FinishOrder(id, data); err == nil {
-        // To Do
-        // Post to Go Pay Wallet
-        path := "/api/transaction/" + strconv.Itoa(*data.TransactionId)
-        urlPath := CreateGopayPath(path)
-        // Create data request
-        dataRequest := url.Values{}
-        dataRequest.Add("finished", "true")
-        // Creat client
-        client := &http.Client{}
-        request, _ := http.NewRequest("POST", urlPath, strings.NewReader(dataRequest.Encode()))
-        if resp, errResp := client.Do(request); errResp == nil {
-            defer resp.Body.Close()
-            // Send response
-            c.JSON(status, gin.H{"message": "order finished"})
-        } else {
-            c.JSON(http.StatusInternalServerError, gin.H{"error_message": errResp.Error()})
-        }
-    } else {
+    if errDriver := driver.ChangeAvailable(data.DriverId, false); errDriver != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error_message": errDriver.Error()})
+        return 
+    }
+    status, err := order.FinishOrder(id, data)
+    if err != nil {
         c.JSON(status, gin.H{"error_message": err.Error()})
     }
+    // Post to Go Pay Wallet if transaction id > 0
+    if (*data.TransactionId > 0) {
+        FinishTransaction(strconv.Itoa(*data.TransactionId))
+    }
+    c.JSON(status, gin.H{"message": "order finished"})
 }
 
 func DeclineOrder(c *gin.Context) {

@@ -24,6 +24,7 @@ type OrderInformation struct {
 
 type CancelPayload struct {
 	UserId int `json:"user_id" binding:"required"`
+	TransactionId int `json:"transaction_id"`
 }
 
 type DeclinePayload struct {
@@ -50,6 +51,7 @@ func CreateOrder(u OrderInformation, totalDriver int) (*Order, error) {
 		Price: u.Price,
 		Status: config.QUEUEING,
 		CreatedAt: time.Now(),
+		GoPay: *u.GoPay,
 	}
 	db.Create(&order)
 	orderLocation := OrderLocation{
@@ -108,8 +110,8 @@ func CancelOrder(id string, payload CancelPayload) (int, error) {
 		var order Order
 		if err = FindOrderById(db, id, &order); err != nil {
 			return http.StatusNotFound, err
-		} else if order.Status == config.CANCELLED || order.Status == config.FINISHED || order.Status == config.CONFIRMED {
-			return http.StatusNotAcceptable, errors.New("Order cannot be cancelled")
+		} else if order.Status == config.CANCELLED || order.Status == config.FINISHED || order.Status == config.ACCEPTED {
+			return http.StatusNotAcceptable, errors.New("Order cannot be canceled")
 		} else if order.UserId != payload.UserId {
 			return http.StatusNotAcceptable, errors.New("User not authenticated")
 		}

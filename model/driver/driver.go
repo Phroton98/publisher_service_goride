@@ -94,3 +94,17 @@ func GetDriverAround(threshold int, clientX float64, clientY float64) ([]DriverI
         return nil, err
     }
 }
+
+func ChangeAvailable(id int, flag bool) (error) {
+    if db, err := ConnectDatabase(); err == nil {
+        defer db.Close()
+        var driver DriverLocation
+        db.Where("id = ?", id).First(&driver)
+        // Check if empty
+        driver.Available = &flag
+        db.Save(&driver)
+        return nil
+    } else {
+        return err
+    }
+}
