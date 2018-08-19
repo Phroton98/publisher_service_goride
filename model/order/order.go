@@ -117,7 +117,7 @@ func CancelOrder(id string, payload CancelPayload) (int, error) {
 		}
 		order.Status = config.CANCELLED
 		db.Save(&order)
-		return http.StatusOK, nil
+		return http.StatusNoContent, nil
 	}
 }
 
