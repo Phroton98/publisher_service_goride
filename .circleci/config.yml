@@ -30,8 +30,12 @@ jobs:
               sleep 1
             done
             echo Failed waiting for Postgres && exit 1
+      - run: 
+          name: Install Postgre client 
+          command: |
+            sudo apt install postgresql-client
       - run:
-          name: Connect Datase
+          name: Connect Database
           command: |
             psql "postgresql://joseph:joseph@localhost:5432/order?sslmode=disable"
       # - run:
