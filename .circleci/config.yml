@@ -31,9 +31,13 @@ jobs:
             done
             echo Failed waiting for Postgres && exit 1
       - run:
-          name: Run migration
+          name: Connect Datase
           command: |
-            go run database_1.go
+            psql "postgresql://joseph:joseph@localhost:5432/order?sslmode=disable"
+      # - run:
+      #     name: Run migration
+      #     command: |
+      #       go run database_1.go
       - save_cache:
           key: v1-pkg-cache
           paths:
