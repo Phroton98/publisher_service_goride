@@ -28,3 +28,4 @@ const ENVIRONMENT = "development"
 
 var HEROKU = os.Getenv("HEROKU")
 var DATABASE_URL = os.Getenv("DATABASE_URL")
+var DATABASE_TEST_URL = "postgres://joseph:joseph@localhost/order?sslmode=disable"
