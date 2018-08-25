@@ -15,5 +15,22 @@ jobs:
     steps:
       - checkout
       - run: mkdir -p $TEST_RESULTS
+      - restore_cache:
+          keys:
+            - v1-pkg-cache
       - run: go get -u -v -t github.com/Masterminds/glide
       - run: glide install -v
+      - run:
+          name: Waiting for Postgres to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z localhost 5432 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for Postgres && exit 1
+      - run:
+          name: Run migration
+          command: |
+            go run database_1.go
