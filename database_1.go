@@ -1,7 +1,7 @@
-package migration
+package main
 
 import (
-	"app.goride/migration/migration"
+	"app.goride/migration"
 )
 
 func main() {
