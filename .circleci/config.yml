@@ -6,4 +6,14 @@ jobs:
       - image: circleci/golang:1.8
       - image: circleci/postgres:9.4.12-alpine
         environment:
-          
+          POSTGRES_USER: joseph
+          POSTGRES_PASSWORD: joseph
+          POSTGRES_DB: order
+    environment:
+      TEST_RESULTS: /tmp/test-results
+      HEROKU: false
+    steps:
+      - checkout
+      - run: mkdir -p $TEST_RESULTS
+      - run: go get -u -v -t github.com/Masterminds/glide
+      - run: glide install -v
